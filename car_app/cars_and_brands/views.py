@@ -1,5 +1,8 @@
+import json
+from django.http import JsonResponse
 from django.shortcuts import render
 from .models import Brand, Car
+from django.views.decorators.csrf import csrf_exempt
 
 
 def get_brand(brand_id):
@@ -18,22 +21,38 @@ def find_brand(request,brand_id):
     brand= get_brand(brand_id)
     return render(request,'cars_and_brands/brand.html', {"brand":brand})
 
-def edit_brand(request, brand_id):
-    if request == 'POST':
+@csrf_exempt
+def edit_brand_name(request, brand_id):
+    # Should be request.method
+    if request.method == 'POST':
         body = json.loads(request.body) 
         brand_id = body['brand_id']
         brand=get_brand(brand_id)
         new_name= body['new_name']
-        new_description=body['new_description']
+        # Can't use this if it's just the name, add new description variable
+        # new_description=body['new_description']
         if new_name:
             brand.name=new_name
+            brand.save()
             return  JsonResponse({'brand_id': brand_id, 'brand_name':new_name})
+    # MUST return some sort of response
+    return JsonResponse({'brand_id': "FAILED", 'brand_name':"FAILED", "brand_description": "FAILED"})
 
-        else:
-            brand.description= new_description
-            return  JsonResponse({'brand_id': brand_id, 'brand_name':new_name, "brand_description": new_description})
-
-
+@csrf_exempt
+def edit_brand_description(request, brand_id):
+    # Should be request.method
+    if request.method == 'POST':
+        body = json.loads(request.body) 
+        brand_id = body['brand_id']
+        brand=get_brand(brand_id)
+        # Can't use this if it's just the name, add new description variable
+        new_description=body['new_description']
+        brand.description= new_description
+            # Save changes
+        brand.save()
+        return  JsonResponse({'brand_id': brand_id, 'brand_name':brand.name, "brand_description": new_description})
+    # MUST return some sort of response
+    return JsonResponse({'brand_id': "FAILED", 'brand_name':"FAILED", "brand_description": "FAILED"})
 
 # create virtual environment
 # source ~/VEnvirons/Validation_Practice_VE/bin/activate
